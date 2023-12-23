@@ -1,7 +1,6 @@
 import requests
 import random
 from datetime import datetime, timedelta
-
 base_url = "http://127.0.0.1:8000"
 
 def create_product(product_data):
