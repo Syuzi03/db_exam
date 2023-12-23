@@ -6,6 +6,10 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the API."}
+    
 DATABASE_URL = "postgresql://syuz:syuz123@localhost/store"
 engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
@@ -98,6 +102,7 @@ def read_product(product_id: int, db: Session = Depends(get_db)):
     else:
         raise HTTPException(status_code=404, detail="Product not found")
 
+# Update the route for updating a product
 @app.put("/products/{product_id}")
 def update_product(product_id: int, updated_product: ProductUpdate, db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.product_id == product_id).first()
@@ -110,6 +115,7 @@ def update_product(product_id: int, updated_product: ProductUpdate, db: Session 
     else:
         raise HTTPException(status_code=404, detail="Product not found")
 
+# Update the route for deleting a product
 @app.delete("/products/{product_id}")
 def delete_product(product_id: int, db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.product_id == product_id).first()
