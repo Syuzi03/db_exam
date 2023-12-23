@@ -40,3 +40,8 @@ Session = sessionmaker(bind=engine)
 session = Session()
 Base.metadata.create_all(engine)
 
+session.execute(text("CREATE USER syuzi WITH PASSWORD 'syuzi123'"))
+session.execute(text("ALTER USER syuzi CREATEDB"))
+session.execute(text("GRANT ALL PRIVILEGES ON DATABASE store TO syuzi"))
+
+session.commit()
