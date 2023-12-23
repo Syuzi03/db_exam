@@ -3,14 +3,15 @@ from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy import create_engine, Column, Integer, String, Date, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 from pydantic import BaseModel
+from typing import List
 
 app = FastAPI()
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the API."}
-    
-DATABASE_URL = "postgresql://syuz:syuz123@localhost/store"
+    return {"message": "Welcome to the API. Use /docs to access the Swagger documentation."}
+
+DATABASE_URL = "postgresql://syuzi:syuzi123@localhost/store"
 engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -23,6 +24,7 @@ class Product(Base):
     product_name = Column(String(50))
     manufacturer = Column(String(50))
     units_of_measurement = Column(Integer)
+    purchases = relationship('Purchase', back_populates='product')
 
 class Buyer(Base):
     __tablename__ = 'Buyer'
@@ -79,6 +81,26 @@ class PurchaseUpdate(BaseModel):
     unit_price: int = None
     quantity: int = None
 
+class ProductResponse(BaseModel):
+    product_id: int
+    product_name: str
+    manufacturer: str
+    units_of_measurement: int
+
+class BuyerResponse(BaseModel):
+    buyer_id: int
+    name: str
+    address: str
+    phone: str
+    contact_person: str
+
+class PurchaseResponse(BaseModel):
+    product_id: int
+    buyer_id: int
+    delivery_date: str  # Assuming you want to represent dates as strings for response
+    unit_price: int
+    quantity: int
+
 def get_db():
     db = SessionLocal()
     try:
@@ -94,13 +116,11 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
     db.refresh(db_product)
     return db_product
 
-@app.get("/products/{product_id}")
-def read_product(product_id: int, db: Session = Depends(get_db)):
-    product = db.query(Product).filter(Product.product_id == product_id).first()
-    if product:
-        return product
-    else:
-        raise HTTPException(status_code=404, detail="Product not found")
+@app.get("/products/", response_model=List[ProductResponse])
+def read_all_products(db: Session = Depends(get_db)):
+    products = db.query(Product).all()
+    return products
+
 
 # Update the route for updating a product
 @app.put("/products/{product_id}")
@@ -134,13 +154,10 @@ def create_buyer(buyer: BuyerCreate, db: Session = Depends(get_db)):
     db.refresh(db_buyer)
     return db_buyer
 
-@app.get("/buyers/{buyer_id}")
-def read_buyer(buyer_id: int, db: Session = Depends(get_db)):
-    buyer = db.query(Buyer).filter(Buyer.buyer_id == buyer_id).first()
-    if buyer:
-        return buyer
-    else:
-        raise HTTPException(status_code=404, detail="Buyer not found")
+@app.get("/buyers/", response_model=List[BuyerResponse])
+def read_all_buyers(db: Session = Depends(get_db)):
+    buyers = db.query(Buyer).all()
+    return buyers
 
 @app.put("/buyers/{buyer_id}")
 def update_buyer(buyer_id: int, updated_buyer: BuyerUpdate, db: Session = Depends(get_db)):
@@ -172,13 +189,10 @@ def create_purchase(purchase: PurchaseCreate, db: Session = Depends(get_db)):
     db.refresh(db_purchase)
     return db_purchase
 
-@app.get("/purchases/{product_id}/{buyer_id}")
-def read_purchase(product_id: int, buyer_id: int, db: Session = Depends(get_db)):
-    purchase = db.query(Purchase).filter(Purchase.product_id == product_id, Purchase.buyer_id == buyer_id).first()
-    if purchase:
-        return purchase
-    else:
-        raise HTTPException(status_code=404, detail="Purchase not found")
+@app.get("/purchases/", response_model=List[PurchaseResponse])
+def read_all_purchases(db: Session = Depends(get_db)):
+    purchases = db.query(Purchase).all()
+    return purchases
 
 @app.put("/purchases/{product_id}/{buyer_id}")
 def update_purchase(product_id: int, buyer_id: int, updated_purchase: PurchaseUpdate, db: Session = Depends(get_db)):
