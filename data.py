@@ -1,6 +1,9 @@
 import requests
 import random
 from datetime import datetime, timedelta
+from main import Purchase
+from connection import session
+
 base_url = "http://127.0.0.1:8000"
 
 def create_product(product_data):
@@ -37,12 +40,20 @@ for _ in range(5):
 
 for _ in range(20):
     purchase_data = {
-        "product_id": random.randint(1, 10),  
-        "buyer_id": random.randint(1, 5),  
-        "delivery_date": (datetime.now() + timedelta(days=random.randint(1, 30))).isoformat(),
-        "unit_price": random.randint(10, 100),
-        "quantity": random.randint(1, 10),
+        "product_id": int(random.randint(1, 10)),
+        "buyer_id": int(random.randint(1, 5)),
+        "delivery_date": (datetime.now() + timedelta(days=random.randint(1, 30))).date().isoformat(),
+        "unit_price": int(random.randint(10, 100)),
+        "quantity": int(random.randint(1, 10)),
     }
-    create_purchase(purchase_data)
+    
+    existing_purchase = session.query(Purchase).filter_by(
+        product_id=purchase_data["product_id"],
+        buyer_id=purchase_data["buyer_id"]
+    ).first()
 
+    if existing_purchase is None:
+        create_purchase(purchase_data)
+    else:
+        print(f"Purchase with product_id={purchase_data['product_id']} and buyer_id={purchase_data['buyer_id']} already exists.")
 
