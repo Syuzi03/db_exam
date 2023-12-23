@@ -97,7 +97,7 @@ class BuyerResponse(BaseModel):
 class PurchaseResponse(BaseModel):
     product_id: int
     buyer_id: int
-    delivery_date: str  # Assuming you want to represent dates as strings for response
+    delivery_date: date
     unit_price: int
     quantity: int
 
