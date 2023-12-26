@@ -8,14 +8,13 @@ app = FastAPI()
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the API. Use /docs to access the Swagger documentation."}
-# Создаем соединение с базой данных
+
 DATABASE_URL = "postgresql://syuzi:syuzi123@localhost:5432/store" 
 engine = create_engine(DATABASE_URL)
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-# SELECT ... WHERE (с несколькими условиями)
 @app.get("/products/")
 async def get_products(product_name: str = Query(None), manufacturer: str = Query(None)):
     query = session.query(Product)
@@ -26,7 +25,6 @@ async def get_products(product_name: str = Query(None), manufacturer: str = Quer
     products = query.all()
     return [{'product_name': product.product_name, 'manufacturer': product.manufacturer} for product in products]
 
-# JOIN
 @app.get("/purchases/")
 async def get_purchases(buyer_name: str = Query(None)):
     query = session.query(Purchase).join(Buyer).join(Product)
@@ -35,7 +33,6 @@ async def get_purchases(buyer_name: str = Query(None)):
     purchases = query.all()
     return [{'buyer_name': purchase.buyer.name, 'product_name': purchase.product.product_name} for purchase in purchases]
 
-# UPDATE
 @app.put("/purchase/{purchase_id}")
 async def update_purchase(purchase_id: int, unit_price: int):
     purchase = session.query(Purchase).filter_by(id=purchase_id).first()
@@ -45,7 +42,6 @@ async def update_purchase(purchase_id: int, unit_price: int):
     session.commit()
     return {'message': 'Purchase updated successfully'}
 
-# GROUP BY
 @app.get("/products/list/")
 async def get_product_list(sort_by: str = Query(None)):
     query = session.query(Product)
