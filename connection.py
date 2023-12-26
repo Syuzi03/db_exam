@@ -1,22 +1,33 @@
-from sqlalchemy import create_engine, Column, Integer, String, Date, ForeignKey, text
+from sqlalchemy import create_engine, Column, Integer, String, Date, ForeignKey
 from sqlalchemy.orm import relationship, declarative_base, Session, sessionmaker
 
+engine = create_engine("postgresql://syuzi:syuzi123@localhost:5432/store", echo=True)
+
 Base = declarative_base()
+
+def get_db():
+    db = None
+    try:
+        db = sessionmaker(bind=engine)()
+        yield db
+    finally:
+        if db is not None:
+            db.close()
 
 class Product(Base):
     __tablename__ = 'Product'
     product_id = Column(Integer, primary_key=True, autoincrement=True)
-    product_name = Column(String(50))
-    manufacturer = Column(String(50))
+    product_name = Column(String)
+    manufacturer = Column(String)
     units_of_measurement = Column(Integer)
 
 class Buyer(Base):
     __tablename__ = 'Buyer'
     buyer_id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(50))
-    address = Column(String(100))
-    phone = Column(String(20))
-    contact_person = Column(String(50))
+    name = Column(String)
+    address = Column(String)
+    phone = Column(String)
+    contact_person = Column(String)
 
 class Purchase(Base):
     __tablename__ = 'Purchase'
@@ -32,16 +43,6 @@ Product.purchases = relationship('Purchase', order_by=Purchase.product_id, back_
 Buyer.purchases = relationship('Purchase', order_by=Purchase.buyer_id, back_populates='buyer')
 
 
-DATABASE_URL = "postgresql://postgres:pass123@localhost:5432/store"
-engine = create_engine(DATABASE_URL)
-
-
+Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
-Base.metadata.create_all(engine)
-
-session.execute(text("CREATE USER syuzi WITH PASSWORD 'syuzi123'"))
-session.execute(text("ALTER USER syuzi CREATEDB"))
-session.execute(text("GRANT ALL PRIVILEGES ON DATABASE store TO syuzi"))
-
-session.commit()
